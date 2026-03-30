@@ -8,16 +8,16 @@ export function useAirQuality() {
         setLoading(true)
         try {
             const res = await fetch('/api/air-quality')
-            const data = await res.json()
-            setData(data)
+            const { data, isMock } = await res.json()
+            setData(data, isMock)
         } finally {
             setLoading(false)
         }
     }
 
     useEffect(() => {
-        fetchData()
-        const interval = setInterval(fetchData, 30 * 60* 1000) //30분
-        return () => clearInterval(interval)
-    }, [])
+        fetchData();
+        const interval = setInterval(fetchData, 30 * 60* 1000); //30분
+        return () => clearInterval(interval);
+    }, []);
 }

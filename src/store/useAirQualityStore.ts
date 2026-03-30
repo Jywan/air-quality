@@ -1,33 +1,31 @@
 import { create } from "zustand";
+import type { DistrictData } from "@/lib/mockData";
 
-type Metric = 'pm25' | 'pm10' | 'o3'
-
-interface DistrictData {
-    districtName: string
-    pm25: number
-    pm10: number
-    o3: number
-    updatedAt: string
-}
+export type Metric = "pm25" | "pm10" | "o3";
 
 interface AirQualityStore {
-    data: DistrictData[]
-    selectedDistrict: string | null
-    selectedMetric: Metric
-    isLoading: boolean
-    setData: (data: DistrictData[]) => void
-    setSelectedDistrict: (name: string | null) => void
-    setSelectedMetric: (metric: Metric) => void
-    setLoading: (v: boolean) => void
+    data: DistrictData[];
+    isMock: boolean;
+    selectedDistrict: string | null;
+    selectedMetric: Metric;
+    isLoading: boolean;
+    updatedAt: string | null;
+    setData: (data: DistrictData[], isMock: boolean) => void;
+    setSelectedDistrict: (name: string | null) => void;
+    setSelectedMetric: (metric: Metric) => void;
+    setLoading: (v: boolean) => void;
 }
 
 export const useAirQualityStore = create<AirQualityStore>((set) => ({
     data: [],
+    isMock: false,
     selectedDistrict: null,
-    selectedMetric: 'pm25',
+    selectedMetric: "pm25",
     isLoading: false,
-    setData: (data) => set({ data }),
+    updatedAt: null,
+    setData: (data, isMock) =>
+        set({ data, isMock, updatedAt: data[0]?.updatedAt ?? null }),
     setSelectedDistrict: (name) => set({ selectedDistrict: name }),
     setSelectedMetric: (metric) => set({ selectedMetric: metric }),
     setLoading: (v) => set({ isLoading: v }),
-}))
+}));
