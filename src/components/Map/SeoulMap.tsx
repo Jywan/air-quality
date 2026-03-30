@@ -9,19 +9,25 @@ const THRESHOLDS: Record<Metric, [number, number, number]> = {
     pm25: [15, 35, 75],
     pm10: [30, 80, 150],
     o3:   [0.030, 0.090, 0.150],
+    no2:  [0.030, 0.060, 0.200],
+    co:   [2.00,  9.00,  15.00],
+    so2:  [0.020, 0.050, 0.150],
 };
 
 const METRIC_LABEL: Record<Metric, string> = {
     pm25: "PM2.5 (㎍/㎥)",
     pm10: "PM10 (㎍/㎥)",
     o3:   "O₃ (ppm)",
+    no2:  "NO₂ (ppm)",
+    co:   "CO (ppm)",
+    so2:  "SO₂ (ppm)",
 };
 
 function getColor(value: number, metric: Metric): string {
     const [t1, t2, t3] = THRESHOLDS[metric];
-    if (value <= t1) return "#4ade80"; // 좋음
-    if (value <= t2) return "#fbbf24"; // 보통
-    if (value <= t3) return "#f97316"; // 나쁨
+    if (value <= t1) return "#60a5fa"; // 좋음
+    if (value <= t2) return "#4ade80"; // 보통
+    if (value <= t3) return "#fb923c"; // 나쁨
     return "#ef4444";                  // 매우 나쁨
 }
 

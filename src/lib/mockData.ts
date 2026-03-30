@@ -3,6 +3,9 @@ export interface HourlyData {
     pm25: number
     pm10: number
     o3: number
+    no2: number
+    co: number
+    so2: number
 }
 
 export interface DistrictData {
@@ -10,6 +13,9 @@ export interface DistrictData {
     pm25: number
     pm10: number
     o3: number
+    no2: number
+    co: number
+    so2: number
     updatedAt: string
     hourly: HourlyData[]
     noData?: boolean
@@ -35,13 +41,19 @@ export function generateMockData(): DistrictData[] {
         const seed = dateSeed + i * 31
         const basePm25 = 8 + Math.floor(seededRandom(seed) * 55)
         const basePm10 = Math.floor(basePm25 * (1.7 + seededRandom(seed + 1) * 0.9))
-        const baseO3 = parseFloat((0.010 + seededRandom(seed + 2) * 0.120).toFixed(3))
+        const baseO3  = parseFloat((0.010 + seededRandom(seed + 2) * 0.120).toFixed(3))
+        const baseNo2 = parseFloat((0.010 + seededRandom(seed + 3) * 0.050).toFixed(3))
+        const baseCo  = parseFloat((0.5   + seededRandom(seed + 4) * 2.0).toFixed(2))
+        const baseSo2 = parseFloat((0.002 + seededRandom(seed + 5) * 0.028).toFixed(3))
 
         const hourly: HourlyData[] = Array.from({ length: 24 }, (_, hour) => ({
             hour,
             pm25: Math.max(1, basePm25 + Math.floor((seededRandom(seed + hour * 7) - 0.5) * 20)),
             pm10: Math.max(1, basePm10 + Math.floor((seededRandom(seed + hour * 7 + 1) - 0.5) * 40)),
-            o3: parseFloat(Math.max(0.001, baseO3 + (seededRandom(seed + hour * 7) - 0.5) * 0.030).toFixed(3)),
+            o3:   parseFloat(Math.max(0.001, baseO3  + (seededRandom(seed + hour * 7) - 0.5) * 0.030).toFixed(3)),
+            no2:  parseFloat(Math.max(0.001, baseNo2 + (seededRandom(seed + hour * 7 + 2) - 0.5) * 0.020).toFixed(3)),
+            co:   parseFloat(Math.max(0.1,   baseCo  + (seededRandom(seed + hour * 7 + 3) - 0.5) * 0.5).toFixed(2)),
+            so2:  parseFloat(Math.max(0.001, baseSo2 + (seededRandom(seed + hour * 7 + 4) - 0.5) * 0.010).toFixed(3)),
         }))
 
         const currentHour = now.getHours()
@@ -49,7 +61,10 @@ export function generateMockData(): DistrictData[] {
             districtName: name,
             pm25: hourly[currentHour].pm25,
             pm10: hourly[currentHour].pm10,
-            o3: hourly[currentHour].o3,
+            o3:   hourly[currentHour].o3,
+            no2:  hourly[currentHour].no2,
+            co:   hourly[currentHour].co,
+            so2:  hourly[currentHour].so2,
             updatedAt: now.toISOString(),
             hourly,
         }

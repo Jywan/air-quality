@@ -4,20 +4,26 @@ import { useAirQualityStore, type Metric } from "@/store/useAirQualityStore";
 const UNIT: Record<Metric, string> = {
     pm25: "㎍/㎥",
     pm10: "㎍/㎥",
-    o3: "ppm",
+    o3:   "ppm",
+    no2:  "ppm",
+    co:   "ppm",
+    so2:  "ppm",
 };
 
 const THRESHOLDS: Record<Metric, [number, number, number]> = {
     pm25: [15, 35, 75],
     pm10: [30, 80, 150],
     o3:   [0.030, 0.090, 0.150],
+    no2:  [0.030, 0.060, 0.200],
+    co:   [2.00,  9.00,  15.00],
+    so2:  [0.020, 0.050, 0.150],
 };
 
 function gradeLabel(value: number, metric: Metric) {
     const [t1, t2, t3] = THRESHOLDS[metric];
-    if (value <= t1) return { text: "좋음",    color: "text-green-600" };
-    if (value <= t2) return { text: "보통",    color: "text-yellow-600" };
-    if (value <= t3) return { text: "나쁨",    color: "text-orange-500" };
+    if (value <= t1) return { text: "좋음",    color: "text-blue-400" };
+    if (value <= t2) return { text: "보통",    color: "text-green-500" };
+    if (value <= t3) return { text: "나쁨",    color: "text-orange-400" };
     return              { text: "매우 나쁨", color: "text-red-600" };
 }
 
@@ -67,7 +73,7 @@ export default function DistrictRanking() {
                 </span>
                 <span className="text-xs text-gray-400">{d.noData ? "" : UNIT[selectedMetric]}</span>
                 <span className={`text-xs font-medium ${d.noData ? "text-gray-400" : grade.color}`}>
-                    {d.noData ? "정보없음" : grade.text}
+                    {d.noData ? "점검중" : grade.text}
                 </span>
                 </li>
             );

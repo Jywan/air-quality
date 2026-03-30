@@ -8,12 +8,18 @@ const COLORS: Record<Metric, string> = {
     pm25: "#3b82f6",
     pm10: "#8b5cf6",
     o3:   "#10b981",
+    no2:  "#f59e0b",
+    co:   "#ef4444",
+    so2:  "#6366f1",
 };
 
 const METRIC_LABEL: Record<Metric, string> = {
     pm25: "PM2.5 (㎍/㎥)",
     pm10: "PM10 (㎍/㎥)",
-    o3:   "O₃ (ppb)",
+    o3:   "O₃ (ppm)",
+    no2:  "NO₂ (ppm)",
+    co:   "CO (ppm)",
+    so2:  "SO₂ (ppm)",
 };
 
 export default function DistrictDetail() {
@@ -43,7 +49,7 @@ export default function DistrictDetail() {
         </div>
 
         <div className="grid grid-cols-3 gap-2 mb-4">
-            {(["pm25", "pm10", "o3"] as Metric[]).map((m) => (
+            {(["pm25", "pm10", "o3", "no2", "co", "so2"] as Metric[]).map((m) => (
             <div key={m} className="text-center bg-gray-50 rounded p-2">
                 <div className="text-xs text-gray-500 uppercase">{m}</div>
                 <div

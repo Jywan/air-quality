@@ -2,15 +2,18 @@
 import { useAirQualityStore, type Metric } from "@/store/useAirQualityStore";
 
 const METRICS: { value: Metric; label: string; desc: string }[] = [
-    { value: "pm25", label: "PM2.5",  desc: "초미세먼지" },
-    { value: "pm10", label: "PM10",   desc: "미세먼지" },
-    { value: "o3",   label: "O₃",     desc: "오존" },
+    { value: "pm25", label: "PM2.5", desc: "초미세먼지" },
+    { value: "pm10", label: "PM10",  desc: "미세먼지" },
+    { value: "o3",   label: "O₃",   desc: "오존" },
+    { value: "no2",  label: "NO₂",  desc: "이산화질소" },
+    { value: "co",   label: "CO",   desc: "일산화탄소" },
+    { value: "so2",  label: "SO₂",  desc: "아황산가스" },
 ];
 
 const LEGEND = [
-    { color: "#4ade80", label: "좋음" },
-    { color: "#fbbf24", label: "보통" },
-    { color: "#f97316", label: "나쁨" },
+    { color: "#60a5fa", label: "좋음" },
+    { color: "#4ade80", label: "보통" },
+    { color: "#fb923c", label: "나쁨" },
     { color: "#ef4444", label: "매우 나쁨" },
 ];
 

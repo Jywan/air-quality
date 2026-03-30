@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { DistrictData } from "@/lib/mockData";
 
-export type Metric = "pm25" | "pm10" | "o3";
+export type Metric = "pm25" | "pm10" | "o3" | "no2" | "co" | "so2";
 
 interface AirQualityStore {
     data: DistrictData[];

@@ -63,19 +63,25 @@ export async function GET() {
             ...p4.response.body.items,
         ];
 
-        type Acc = { pm25: number[]; pm10: number[]; o3: number[]; noData: boolean };
+        type Acc = { pm25: number[]; pm10: number[]; o3: number[]; no2: number[]; co: number[]; so2: number[]; noData: boolean };
         const districtMap = new Map<string, Acc>();
         for (const item of items) {
             const key = STATION_TO_DISTRICT[item.stationName];
             if (!key) continue;
-            if (!districtMap.has(key)) districtMap.set(key, { pm25: [], pm10: [], o3: [], noData: false });
+            if (!districtMap.has(key)) districtMap.set(key, { pm25: [], pm10: [], o3: [], no2: [], co: [], so2: [], noData: false });
             const d = districtMap.get(key)!;
             const pm25 = Number(item.pm25Value);
             const pm10 = Number(item.pm10Value);
             const o3   = Number(item.o3Value);
+            const no2  = Number(item.no2Value);
+            const co   = Number(item.coValue);
+            const so2  = Number(item.so2Value);
             if (!isNaN(pm25)) d.pm25.push(pm25);
             if (!isNaN(pm10)) d.pm10.push(pm10);
             if (!isNaN(o3))   d.o3.push(o3);
+            if (!isNaN(no2))  d.no2.push(no2);
+            if (!isNaN(co))   d.co.push(co);
+            if (!isNaN(so2))  d.so2.push(so2);
             if (isNaN(pm25) && isNaN(pm10) && isNaN(o3)) d.noData = true;
         }
 
@@ -84,7 +90,10 @@ export async function GET() {
             districtName: name,
             pm25: v.pm25.length ? Math.round(v.pm25.reduce((a, b) => a + b, 0) / v.pm25.length) : 0,
             pm10: v.pm10.length ? Math.round(v.pm10.reduce((a, b) => a + b, 0) / v.pm10.length) : 0,
-            o3: v.o3.length ? parseFloat((v.o3.reduce((a, b) => a + b, 0) / v.o3.length).toFixed(3)) : 0,
+            o3:  v.o3.length  ? parseFloat((v.o3.reduce((a, b) => a + b, 0)  / v.o3.length).toFixed(3))  : 0,
+            no2: v.no2.length ? parseFloat((v.no2.reduce((a, b) => a + b, 0) / v.no2.length).toFixed(3)) : 0,
+            co:  v.co.length  ? parseFloat((v.co.reduce((a, b) => a + b, 0)  / v.co.length).toFixed(2))  : 0,
+            so2: v.so2.length ? parseFloat((v.so2.reduce((a, b) => a + b, 0) / v.so2.length).toFixed(3)) : 0,
             updatedAt: now.toISOString(),
             hourly: [],
             noData: v.noData && v.pm25.length === 0,
