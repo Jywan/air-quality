@@ -1,23 +1,30 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useAirQualityStore } from "@/store/useAirQualityStore";
 
-export function useAirQuality() {
-    const { setData, setLoading } = useAirQualityStore();
+const SIDO_PARAM: Record<string, string> = {
+    "서울": "서울",
+    "경기": "경기",
+}
 
-    const fetchData = async () => {
+
+export function useAirQuality() {
+    const { setData, setLoading, selectedRegion } = useAirQualityStore();
+
+    const fetchData = useCallback(async () => {
         setLoading(true)
         try {
-            const res = await fetch('/api/air-quality')
-            const { data, isMock } = await res.json()
-            setData(data, isMock)
+            const sido = SIDO_PARAM[selectedRegion];
+            const res = await fetch(`/api/air-quality?sido=${encodeURIComponent(sido)}`);
+            const { data, isMock } = await res.json();
+            setData(data, isMock);
         } finally {
             setLoading(false)
         }
-    }
+    }, [selectedRegion, setData, setLoading]);
 
     useEffect(() => {
         fetchData();
         const interval = setInterval(fetchData, 30 * 60* 1000); //30분
         return () => clearInterval(interval);
-    }, []);
+    }, [fetchData]);
 }

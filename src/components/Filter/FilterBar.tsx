@@ -1,5 +1,5 @@
 "use client";
-import { useAirQualityStore, type Metric } from "@/store/useAirQualityStore";
+import { useAirQualityStore, type Metric, type Region } from "@/store/useAirQualityStore";
 
 const METRICS: { value: Metric; label: string; desc: string }[] = [
     { value: "pm25", label: "PM2.5", desc: "초미세먼지" },
@@ -10,6 +10,11 @@ const METRICS: { value: Metric; label: string; desc: string }[] = [
     { value: "so2",  label: "SO₂",  desc: "아황산가스" },
 ];
 
+const REGIONS: { value: Region; label: string }[] = [
+    { value: "서울", label: "서울" },
+    { value: "경기", label: "경기" },
+];
+
 const LEGEND = [
     { color: "#60a5fa", label: "좋음" },
     { color: "#4ade80", label: "보통" },
@@ -18,7 +23,7 @@ const LEGEND = [
 ];
 
 export default function FilterBar() {
-    const { selectedMetric, setSelectedMetric, isLoading, updatedAt } =
+    const { selectedMetric, setSelectedMetric, selectedRegion, setSelectedRegion, isLoading, updatedAt } =
         useAirQualityStore();
 
     const formatted = updatedAt
@@ -31,8 +36,24 @@ export default function FilterBar() {
     return (
         <header className="flex items-center gap-4 px-4 py-2 bg-white border-b border-gray-200 shadow-sm flex-wrap">
         <h1 className="text-base font-bold text-gray-800 whitespace-nowrap">
-            서울시 실시간 대기질 지도
+            실시간 대기질 지도
         </h1>
+
+        <div className="flex gap-1 border border-gray-200 rounded-full p-0.5">
+            {REGIONS.map((r) => (
+            <button
+                key={r.value}
+                onClick={() => setSelectedRegion(r.value)}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                selectedRegion === r.value
+                    ? "bg-gray-800 text-white"
+                    : "text-gray-500 hover:bg-gray-100"
+                }`}
+            >
+                {r.label}
+            </button>
+            ))}
+        </div>
 
         <div className="flex gap-1">
             {METRICS.map((m) => (

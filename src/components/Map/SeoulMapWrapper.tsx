@@ -1,8 +1,8 @@
 "use client";
 import dynamic from "next/dynamic";
 
-const SeoulMap = dynamic(() => import("./SeoulMap"), { ssr: false });
+const KoreaMap = dynamic(() => import("./KoreaMap"), { ssr: false });
 
-export default function SeoulMapWrapper() {
-    return <SeoulMap />;
+export default function KoreaMapWrapper() {
+    return <KoreaMap />;
 }
