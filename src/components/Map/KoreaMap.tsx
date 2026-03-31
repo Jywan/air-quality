@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import type { Feature, FeatureCollection } from "geojson";
 import type { Layer, PathOptions } from "leaflet";
-import { useAirQualityStore, type Metric } from "@/store/useAirQualityStore";
+import { useAirQualityStore, type Metric, type Region } from "@/store/useAirQualityStore";
 
 const THRESHOLDS: Record<Metric, [number, number, number]> = {
     pm25: [15, 35, 75],
@@ -24,10 +24,28 @@ const METRIC_LABEL: Record<Metric, string> = {
     so2:  "SO₂ (ppm)",
 };
 
-// 구단위 데이터가 있는 경기 시 목록
 const GYEONGGI_CITIES_WITH_GU = new Set([
     '수원시', '성남시', '고양시', '안산시', '부천시', '안양시', '용인시',
-])
+]);
+
+const FLAT_GEOJSON_FILES: Partial<Record<Region, string>> = {
+    '서울': '/seoul-districts.geojson',
+    '인천': '/incheon-districts.geojson',
+    '부산': '/busan-districts.geojson',
+    '대구': '/daegu-districts.geojson',
+    '광주': '/gwangju-districts.geojson',
+    '대전': '/daejeon-districts.geojson',
+    '울산': '/ulsan-districts.geojson',
+    '세종': '/sejong-districts.geojson',
+    '강원': '/gangwon-districts.geojson',
+    '충북': '/chungbuk-districts.geojson',
+    '충남': '/chungnam-districts.geojson',
+    '전북': '/jeonbuk-districts.geojson',
+    '전남': '/jeonnam-districts.geojson',
+    '경북': '/gyeongbuk-districts.geojson',
+    '경남': '/gyeongnam-districts.geojson',
+    '제주': '/jeju-districts.geojson',
+};
 
 function getColor(value: number, metric: Metric): string {
     const [t1, t2, t3] = THRESHOLDS[metric];
@@ -61,17 +79,19 @@ function FitBoundsController({ geoJson }: { geoJson: FeatureCollection }) {
 export default function KoreaMap() {
     const { data, selectedMetric, selectedDistrict, selectedRegion, selectedCity, setSelectedDistrict, setSelectedCity } = useAirQualityStore();
 
+    const [flatGeoJson, setFlatGeoJson] = useState<FeatureCollection | null>(null);
     const [citiesGeoJson, setCitiesGeoJson] = useState<FeatureCollection | null>(null);
     const [districtsGeoJson, setDistrictsGeoJson] = useState<FeatureCollection | null>(null);
-    const [incheonGeoJson, setIncheonGeoJson] = useState<FeatureCollection | null>(null);
 
+    const isFlatRegion = selectedRegion in FLAT_GEOJSON_FILES;
     const isGyeonggiDrilldown = selectedRegion === '경기' && selectedCity !== null;
 
-    // 서울 GeoJSON
-    const [seoulGeoJson, setSeoulGeoJson] = useState<FeatureCollection | null>(null);
+    // flat 지역 GeoJSON (서울/인천/부산 등)
     useEffect(() => {
-        if (selectedRegion !== '서울') return;
-        fetch('/seoul-districts.geojson').then(r => r.json()).then(setSeoulGeoJson);
+        const file = FLAT_GEOJSON_FILES[selectedRegion];
+        if (!file) return;
+        setFlatGeoJson(null);
+        fetch(file).then(r => r.json()).then(setFlatGeoJson);
     }, [selectedRegion]);
 
     // 경기 GeoJSON
@@ -81,13 +101,6 @@ export default function KoreaMap() {
         fetch('/gyeonggi-districts.geojson').then(r => r.json()).then(setDistrictsGeoJson);
     }, [selectedRegion]);
 
-    // 인천 GeoJSON
-    useEffect(() => {
-        if (selectedRegion !== '인천') return;
-        fetch('/incheon-districts.geojson').then(r => r.json()).then(setIncheonGeoJson);
-    }, [selectedRegion]);
-
-    // 드릴다운 시 해당 시의 구 GeoJSON만 필터
     const drilldownGeoJson = useMemo(() => {
         if (!districtsGeoJson || !selectedCity) return null;
         return {
@@ -98,7 +111,6 @@ export default function KoreaMap() {
         } as FeatureCollection;
     }, [districtsGeoJson, selectedCity]);
 
-    // 경기 시 단위 값 (구 데이터 평균 또는 직접 매핑)
     const getCityValue = useCallback(
         (cityName: string): number => {
             const entries = data.filter(
@@ -117,7 +129,6 @@ export default function KoreaMap() {
         [data, selectedMetric]
     );
 
-    // 서울/경기 구 단위 스타일
     const styleDistrict = useCallback(
         (feature?: Feature): PathOptions => {
             const name = feature?.properties?.name ?? "";
@@ -134,7 +145,6 @@ export default function KoreaMap() {
         [data, selectedMetric, selectedDistrict, getDistrictValue]
     );
 
-    // 경기 시 단위 스타일
     const styleCity = useCallback(
         (feature?: Feature): PathOptions => {
             const name = feature?.properties?.name ?? "";
@@ -143,7 +153,7 @@ export default function KoreaMap() {
                 d => d.districtName === name || d.districtName.startsWith(name)
             );
             return {
-                fillColor: data.length === 0 ? "#cbd5e1": !hasData ? "#9ca3af" : getColor(value, selectedMetric),
+                fillColor: data.length === 0 ? "#cbd5e1" : !hasData ? "#9ca3af" : getColor(value, selectedMetric),
                 weight: 1,
                 color: "#64748b",
                 fillOpacity: 0.75,
@@ -198,11 +208,11 @@ export default function KoreaMap() {
     );
 
     const gyeonggiCenter: [number, number] = [37.4138, 127.5183];
+    const seoulCenter: [number, number] = [37.5665, 126.978];
     const incheonCenter: [number, number] = [37.4563, 126.7052];
 
     const currentGeoJson =
-        selectedRegion === '서울' ? seoulGeoJson
-        : selectedRegion === '인천' ? incheonGeoJson
+        isFlatRegion ? flatGeoJson
         : isGyeonggiDrilldown ? drilldownGeoJson
         : citiesGeoJson;
 
@@ -217,8 +227,8 @@ export default function KoreaMap() {
                 </button>
             )}
             <MapContainer
-                center={selectedRegion === '서울' ? [37.5665, 126.978] : selectedRegion === '인천' ? incheonCenter : gyeonggiCenter}
-                zoom={selectedRegion === '경기' ? 9 : 11}
+                center={[36.5, 127.5]}
+                zoom={7}
                 className="w-full h-full"
                 scrollWheelZoom
             >
@@ -227,7 +237,7 @@ export default function KoreaMap() {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 {selectedRegion === '서울' && (
-                    <MapController center={[37.5665, 126.978]} zoom={11} />
+                    <MapController center={seoulCenter} zoom={11} />
                 )}
                 {selectedRegion === '인천' && (
                     <MapController center={incheonCenter} zoom={11} />
@@ -238,17 +248,12 @@ export default function KoreaMap() {
                 {isGyeonggiDrilldown && drilldownGeoJson && (
                     <FitBoundsController geoJson={drilldownGeoJson} />
                 )}
-                {currentGeoJson && selectedRegion === '인천' && (
-                    <GeoJSON
-                        key={`incheon-${selectedMetric}-${data.length}-${selectedDistrict}`}
-                        data={currentGeoJson}
-                        style={styleDistrict}
-                        onEachFeature={onEachDistrict}
-                    />
+                {isFlatRegion && flatGeoJson && !['서울', '인천'].includes(selectedRegion) && (
+                    <FitBoundsController geoJson={flatGeoJson} />
                 )}
-                {currentGeoJson && selectedRegion === '서울' && (
+                {currentGeoJson && isFlatRegion && (
                     <GeoJSON
-                        key={`seoul-${selectedMetric}-${data.length}-${selectedDistrict}`}
+                        key={`flat-${selectedRegion}-${selectedMetric}-${data.length}-${selectedDistrict}`}
                         data={currentGeoJson}
                         style={styleDistrict}
                         onEachFeature={onEachDistrict}
@@ -272,5 +277,5 @@ export default function KoreaMap() {
                 )}
             </MapContainer>
         </div>
-    )
+    );
 }

@@ -2,7 +2,7 @@ import { create } from "zustand";
 import type { DistrictData } from "@/lib/mockData";
 
 export type Metric = "pm25" | "pm10" | "o3" | "no2" | "co" | "so2";
-export type Region = "서울" | "경기" | "인천";
+export type Region = "서울" | "경기" | "인천" | "강원" | "충북" | "충남" | "전북" | "전남" | "경북" | "경남" | "부산" | "대구" | "광주" | "대전" | "울산" | "세종" | "제주";
 
 interface AirQualityStore {
     data: DistrictData[];
