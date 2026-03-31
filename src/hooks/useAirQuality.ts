@@ -2,6 +2,7 @@ import { useEffect, useCallback } from "react";
 import { useAirQualityStore } from "@/store/useAirQualityStore";
 
 const SIDO_PARAM: Record<string, string> = {
+    "전국": "전국",
     "서울": "서울", "경기": "경기", "인천": "인천",
     "강원": "강원", "충북": "충북", "충남": "충남",
     "전북": "전북", "전남": "전남", "경북": "경북", "경남": "경남",

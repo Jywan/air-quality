@@ -323,6 +323,61 @@ const PAGE_COUNT: Record<string, number> = {
     제주: 2,
 };
 
+const ALL_SIDOS = ['서울','경기','인천','부산','대구','광주','대전','울산','세종','강원','충북','충남','전북','전남','경북','경남','제주'] as const;
+
+async function fetchSidoItems(sido: string, pageCount: number): Promise<Record<string, string>[]> {
+    const fetchPage = (pageNo: number) => {
+        const params = new URLSearchParams({
+            serviceKey: process.env.AIRKOREA_API_KEY!,
+            returnType: "json",
+            numOfRow: "10",
+            pageNo: String(pageNo),
+            sidoName: sido,
+            ver: "1.0",
+        });
+        return fetch(`${BASE_URL}/getCtprvnRltmMesureDnsty?${params}`, {
+            next: { revalidate: 1800 },
+        }).then((r) => r.json());
+    };
+    const pages = await Promise.all(Array.from({ length: pageCount }, (_, i) => fetchPage(i + 1)));
+    return pages.flatMap((p) => p.response.body.items ?? []);
+}
+
+async function fetchNationwide() {
+    const results = await Promise.all(
+        ALL_SIDOS.map((s) => fetchSidoItems(s, Math.min(PAGE_COUNT[s] ?? 2, 2)))
+    );
+    const now = new Date();
+    const data = ALL_SIDOS.map((sidoName, i) => {
+        const items = results[i];
+        const stationToDistrict = STATION_MAP[sidoName] ?? {};
+        const pm25: number[] = [], pm10: number[] = [], o3: number[] = [], no2: number[] = [], co: number[] = [], so2: number[] = [];
+        for (const item of items) {
+            if (!stationToDistrict[item.stationName]) continue;
+            const v_pm25 = Number(item.pm25Value); if (!isNaN(v_pm25)) pm25.push(v_pm25);
+            const v_pm10 = Number(item.pm10Value); if (!isNaN(v_pm10)) pm10.push(v_pm10);
+            const v_o3   = Number(item.o3Value);   if (!isNaN(v_o3))   o3.push(v_o3);
+            const v_no2  = Number(item.no2Value);  if (!isNaN(v_no2))  no2.push(v_no2);
+            const v_co   = Number(item.coValue);   if (!isNaN(v_co))   co.push(v_co);
+            const v_so2  = Number(item.so2Value);  if (!isNaN(v_so2))  so2.push(v_so2);
+        }
+        const avg = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+        return {
+            districtName: sidoName,
+            pm25: Math.round(avg(pm25)),
+            pm10: Math.round(avg(pm10)),
+            o3:  parseFloat(avg(o3).toFixed(3)),
+            no2: parseFloat(avg(no2).toFixed(3)),
+            co:  parseFloat(avg(co).toFixed(2)),
+            so2: parseFloat(avg(so2).toFixed(3)),
+            updatedAt: now.toISOString(),
+            hourly: [],
+            noData: pm25.length === 0 && pm10.length === 0,
+        };
+    });
+    return NextResponse.json({ data, isMock: false, unmapped: [] });
+}
+
 export async function GET(request: NextRequest) {
 
     const sido = request.nextUrl.searchParams.get("sido") ?? "서울";
@@ -332,6 +387,8 @@ export async function GET(request: NextRequest) {
     }
 
     try {
+        if (sido === "전국") return await fetchNationwide();
+
         const pageCount = PAGE_COUNT[sido] ?? 4;
         const fetchPage = (pageNo: number) => {
             const params = new URLSearchParams({

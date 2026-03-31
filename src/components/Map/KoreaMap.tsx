@@ -29,6 +29,7 @@ const GYEONGGI_CITIES_WITH_GU = new Set([
 ]);
 
 const FLAT_GEOJSON_FILES: Partial<Record<Region, string>> = {
+    '전국': '/korea-provinces.geojson',
     '서울': '/seoul-districts.geojson',
     '인천': '/incheon-districts.geojson',
     '부산': '/busan-districts.geojson',
@@ -58,7 +59,8 @@ function getColor(value: number, metric: Metric): string {
 function MapController({ center, zoom }: { center: [number, number]; zoom: number }) {
     const map = useMap();
     useEffect(() => {
-        map.setView(center, zoom);
+        map.setView(center, zoom, { animate: false });
+        map.invalidateSize();
     }, [center, zoom, map]);
     return null;
 }
@@ -236,6 +238,9 @@ export default function KoreaMap() {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
+                {selectedRegion === '전국' && (
+                    <MapController center={[36.0, 127.8]} zoom={7} />
+                )}
                 {selectedRegion === '서울' && (
                     <MapController center={seoulCenter} zoom={11} />
                 )}
@@ -248,8 +253,8 @@ export default function KoreaMap() {
                 {isGyeonggiDrilldown && drilldownGeoJson && (
                     <FitBoundsController geoJson={drilldownGeoJson} />
                 )}
-                {isFlatRegion && flatGeoJson && !['서울', '인천'].includes(selectedRegion) && (
-                    <FitBoundsController geoJson={flatGeoJson} />
+                {isFlatRegion && flatGeoJson && !['전국', '서울', '인천'].includes(selectedRegion) && (
+                        <FitBoundsController geoJson={flatGeoJson} />
                 )}
                 {currentGeoJson && isFlatRegion && (
                     <GeoJSON

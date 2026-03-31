@@ -11,6 +11,7 @@ const METRICS: { value: Metric; label: string; desc: string }[] = [
 ];
 
 const REGIONS: { value: Region; label: string }[] = [
+    { value: "전국", label: "전국" },
     { value: "서울", label: "서울" },
     { value: "경기", label: "경기" },
     { value: "인천", label: "인천" },
