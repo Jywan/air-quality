@@ -2,7 +2,7 @@ import { create } from "zustand";
 import type { DistrictData } from "@/lib/mockData";
 
 export type Metric = "pm25" | "pm10" | "o3" | "no2" | "co" | "so2";
-export type Region = "서울" | "경기";
+export type Region = "서울" | "경기" | "인천";
 
 interface AirQualityStore {
     data: DistrictData[];
@@ -34,7 +34,7 @@ export const useAirQualityStore = create<AirQualityStore>((set) => ({
         set({ data, isMock, updatedAt: data[0]?.updatedAt ?? null }),
     setSelectedDistrict: (name) => set({ selectedDistrict: name }),
     setSelectedMetric: (metric) => set({ selectedMetric: metric }),
-    setSelectedRegion: (region) => set({ selectedRegion: region, selectedDistrict: null, data: [] }),
+    setSelectedRegion: (region) => set({ selectedRegion: region, selectedDistrict: null, selectedCity: null, data: [] }),
     setSelectedCity: (city) => set({ selectedCity: city, selectedDistrict: null}), 
     setLoading: (v) => set({ isLoading: v }),
 }));

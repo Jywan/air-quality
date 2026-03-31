@@ -63,6 +63,7 @@ export default function KoreaMap() {
 
     const [citiesGeoJson, setCitiesGeoJson] = useState<FeatureCollection | null>(null);
     const [districtsGeoJson, setDistrictsGeoJson] = useState<FeatureCollection | null>(null);
+    const [incheonGeoJson, setIncheonGeoJson] = useState<FeatureCollection | null>(null);
 
     const isGyeonggiDrilldown = selectedRegion === '경기' && selectedCity !== null;
 
@@ -78,6 +79,12 @@ export default function KoreaMap() {
         if (selectedRegion !== '경기') return;
         fetch('/gyeonggi-cities.geojson').then(r => r.json()).then(setCitiesGeoJson);
         fetch('/gyeonggi-districts.geojson').then(r => r.json()).then(setDistrictsGeoJson);
+    }, [selectedRegion]);
+
+    // 인천 GeoJSON
+    useEffect(() => {
+        if (selectedRegion !== '인천') return;
+        fetch('/incheon-districts.geojson').then(r => r.json()).then(setIncheonGeoJson);
     }, [selectedRegion]);
 
     // 드릴다운 시 해당 시의 구 GeoJSON만 필터
@@ -191,9 +198,11 @@ export default function KoreaMap() {
     );
 
     const gyeonggiCenter: [number, number] = [37.4138, 127.5183];
+    const incheonCenter: [number, number] = [37.4563, 126.7052];
 
-    const currentGeoJson = 
+    const currentGeoJson =
         selectedRegion === '서울' ? seoulGeoJson
+        : selectedRegion === '인천' ? incheonGeoJson
         : isGyeonggiDrilldown ? drilldownGeoJson
         : citiesGeoJson;
 
@@ -208,8 +217,8 @@ export default function KoreaMap() {
                 </button>
             )}
             <MapContainer
-                center={selectedRegion === '서울' ? [37.5665, 126.978] : gyeonggiCenter}
-                zoom={selectedRegion === '서울' ? 11 : 9}
+                center={selectedRegion === '서울' ? [37.5665, 126.978] : selectedRegion === '인천' ? incheonCenter : gyeonggiCenter}
+                zoom={selectedRegion === '경기' ? 9 : 11}
                 className="w-full h-full"
                 scrollWheelZoom
             >
@@ -220,11 +229,22 @@ export default function KoreaMap() {
                 {selectedRegion === '서울' && (
                     <MapController center={[37.5665, 126.978]} zoom={11} />
                 )}
+                {selectedRegion === '인천' && (
+                    <MapController center={incheonCenter} zoom={11} />
+                )}
                 {selectedRegion === '경기' && !isGyeonggiDrilldown && (
                     <MapController center={gyeonggiCenter} zoom={9} />
                 )}
                 {isGyeonggiDrilldown && drilldownGeoJson && (
                     <FitBoundsController geoJson={drilldownGeoJson} />
+                )}
+                {currentGeoJson && selectedRegion === '인천' && (
+                    <GeoJSON
+                        key={`incheon-${selectedMetric}-${data.length}-${selectedDistrict}`}
+                        data={currentGeoJson}
+                        style={styleDistrict}
+                        onEachFeature={onEachDistrict}
+                    />
                 )}
                 {currentGeoJson && selectedRegion === '서울' && (
                     <GeoJSON

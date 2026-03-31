@@ -4,6 +4,7 @@ import { useAirQualityStore } from "@/store/useAirQualityStore";
 const SIDO_PARAM: Record<string, string> = {
     "서울": "서울",
     "경기": "경기",
+    "인천": "인천",
 }
 
 
