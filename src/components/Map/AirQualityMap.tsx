@@ -78,7 +78,7 @@ function FitBoundsController({ geoJson }: { geoJson: FeatureCollection }) {
     return null;
 }
 
-export default function KoreaMap() {
+export default function AirQualityMap() {
     const { data, selectedMetric, selectedDistrict, selectedRegion, selectedCity, setSelectedDistrict, setSelectedCity } = useAirQualityStore();
 
     const [flatGeoJson, setFlatGeoJson] = useState<FeatureCollection | null>(null);
