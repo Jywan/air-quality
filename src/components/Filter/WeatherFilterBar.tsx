@@ -74,7 +74,7 @@ export default function WeatherFilterBar() {
                 {REGIONS.map((r) => (
                     <button
                         key={r.value}
-                        onClick={() => setSelectedRegion(r.value)}
+                        onClick={() => { if (selectedRegion !== r.value) setSelectedRegion(r.value); }}
                         className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                             selectedRegion === r.value
                                 ? "bg-gray-800 text-white"
