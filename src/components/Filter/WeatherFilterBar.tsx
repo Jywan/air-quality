@@ -1,11 +1,12 @@
 "use client";
 import { useWeatherStore, type WeatherMetric, type Region } from "@/store/useWeatherStore";
+import { Thermometer, Droplets, Wind, CloudRain } from "lucide-react";
 
-const METRICS: { value: WeatherMetric; label: string; desc: string }[] = [
-    { value: "temp",          label: "기온",   desc: "°C"   },
-    { value: "humidity",      label: "습도",   desc: "%"    },
-    { value: "windSpeed",     label: "풍속",   desc: "m/s"  },
-    { value: "precipitation", label: "강수량", desc: "mm/h" },
+const METRICS: { value: WeatherMetric; label: string; desc: string; icon: (active: boolean) => React.ReactNode }[] = [
+    { value: "temp",          label: "기온",   desc: "°C",   icon: (a) => <Thermometer size={14} color={a ? "white" : "#ef4444"} /> },
+    { value: "humidity",      label: "습도",   desc: "%",    icon: (a) => <Droplets    size={14} color={a ? "white" : "#60a5fa"} /> },
+    { value: "windSpeed",     label: "풍속",   desc: "m/s",  icon: (a) => <Wind        size={14} color={a ? "white" : "#4ade80"} /> },
+    { value: "precipitation", label: "강수량", desc: "mm/h", icon: (a) => <CloudRain   size={14} color={a ? "white" : "#3b82f6"} /> },
 ];
 
 const REGIONS: { value: Region; label: string }[] = [
@@ -89,12 +90,13 @@ export default function WeatherFilterBar() {
                     <button
                         key={m.value}
                         onClick={() => setSelectedMetric(m.value)}
-                        className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                        className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                             selectedMetric === m.value
                                 ? "bg-blue-600 text-white"
                                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                         }`}
                     >
+                        {m.icon(selectedMetric === m.value)}
                         {m.label}
                         <span className="ml-1 text-xs opacity-75">{m.desc}</span>
                     </button>

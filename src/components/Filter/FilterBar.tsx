@@ -1,13 +1,14 @@
 "use client";
 import { useAirQualityStore, type Metric, type Region } from "@/store/useAirQualityStore";
+import { CloudFog, Cloud, Sun, Factory, Car, FlaskConical } from "lucide-react";
 
-const METRICS: { value: Metric; label: string; desc: string }[] = [
-    { value: "pm25", label: "PM2.5", desc: "초미세먼지" },
-    { value: "pm10", label: "PM10",  desc: "미세먼지" },
-    { value: "o3",   label: "O₃",   desc: "오존" },
-    { value: "no2",  label: "NO₂",  desc: "이산화질소" },
-    { value: "co",   label: "CO",   desc: "일산화탄소" },
-    { value: "so2",  label: "SO₂",  desc: "아황산가스" },
+const METRICS: { value: Metric; label: string; desc: string; icon: (active: boolean) => React.ReactNode }[] = [
+    { value: "pm25", label: "PM2.5", desc: "초미세먼지", icon: (a) => <CloudFog    size={14} color={a ? "white" : "#94a3b8"} /> },
+    { value: "pm10", label: "PM10",  desc: "미세먼지",   icon: (a) => <Cloud       size={14} color={a ? "white" : "#60a5fa"} /> },
+    { value: "o3",   label: "O₃",   desc: "오존",       icon: (a) => <Sun         size={14} color={a ? "white" : "#facc15"} /> },
+    { value: "no2",  label: "NO₂",  desc: "이산화질소", icon: (a) => <Factory     size={14} color={a ? "white" : "#f97316"} /> },
+    { value: "co",   label: "CO",   desc: "일산화탄소", icon: (a) => <Car         size={14} color={a ? "white" : "#ef4444"} /> },
+    { value: "so2",  label: "SO₂",  desc: "아황산가스", icon: (a) => <FlaskConical size={14} color={a ? "white" : "#a855f7"} /> },
 ];
 
 const REGIONS: { value: Region; label: string }[] = [
@@ -76,12 +77,13 @@ export default function FilterBar() {
             <button
                 key={m.value}
                 onClick={() => setSelectedMetric(m.value)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                selectedMetric === m.value
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    selectedMetric === m.value
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
             >
+                {m.icon(selectedMetric === m.value)}
                 {m.label}
                 <span className="ml-1 text-xs opacity-75">{m.desc}</span>
             </button>
