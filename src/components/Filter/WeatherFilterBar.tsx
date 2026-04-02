@@ -1,12 +1,33 @@
 "use client";
-import { useWeatherStore, type WeatherMetric } from "@/store/useWeatherStore";
+import { useWeatherStore, type WeatherMetric, type Region } from "@/store/useWeatherStore";
 
 const METRICS: { value: WeatherMetric; label: string; desc: string }[] = [
     { value: "temp",          label: "기온",   desc: "°C"   },
     { value: "humidity",      label: "습도",   desc: "%"    },
     { value: "windSpeed",     label: "풍속",   desc: "m/s"  },
     { value: "precipitation", label: "강수량", desc: "mm/h" },
-]
+];
+
+const REGIONS: { value: Region; label: string }[] = [
+    { value: "전국", label: "전국" },
+    { value: "서울", label: "서울" },
+    { value: "경기", label: "경기" },
+    { value: "인천", label: "인천" },
+    { value: "부산", label: "부산" },
+    { value: "대구", label: "대구" },
+    { value: "광주", label: "광주" },
+    { value: "대전", label: "대전" },
+    { value: "울산", label: "울산" },
+    { value: "세종", label: "세종" },
+    { value: "강원", label: "강원" },
+    { value: "충북", label: "충북" },
+    { value: "충남", label: "충남" },
+    { value: "전북", label: "전북" },
+    { value: "전남", label: "전남" },
+    { value: "경북", label: "경북" },
+    { value: "경남", label: "경남" },
+    { value: "제주", label: "제주" },
+];
 
 const LEGENDS: Record<WeatherMetric, { color: string; label: string }[]> = {
     temp: [
@@ -26,7 +47,7 @@ const LEGENDS: Record<WeatherMetric, { color: string; label: string }[]> = {
         { color: "#4ade80", label: "약 ~3m/s"  },
         { color: "#facc15", label: "보통 ~9m/s" },
         { color: "#fb923c", label: "강 ~14m/s"  },
-        { color: "#ef4444", label: "매우 강함"   },
+        { color: "#ef4444", label: "매우 강"     },
     ],
     precipitation: [
         { color: "#e2e8f0", label: "없음"   },
@@ -37,7 +58,7 @@ const LEGENDS: Record<WeatherMetric, { color: string; label: string }[]> = {
 };
 
 export default function WeatherFilterBar() {
-    const { selectedMetric, setSelectedMetric, isLoading, updatedAt } = useWeatherStore();
+    const { selectedMetric, setSelectedMetric, selectedRegion, setSelectedRegion, isLoading, updatedAt } = useWeatherStore();
 
     const formatted = updatedAt
         ? new Date(updatedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })
@@ -48,6 +69,21 @@ export default function WeatherFilterBar() {
             <h1 className="text-base font-bold text-gray-800 whitespace-nowrap">
                 실시간 날씨 지도
             </h1>
+            <div className="flex gap-1 border border-gray-200 rounded-full p-0.5">
+                {REGIONS.map((r) => (
+                    <button
+                        key={r.value}
+                        onClick={() => setSelectedRegion(r.value)}
+                        className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                            selectedRegion === r.value
+                                ? "bg-gray-800 text-white"
+                                : "text-gray-500 hover:bg-gray-100"
+                        }`}
+                    >
+                        {r.label}
+                    </button>
+                ))}
+            </div>
             <div className="flex gap-1">
                 {METRICS.map((m) => (
                     <button
@@ -68,10 +104,7 @@ export default function WeatherFilterBar() {
                 <div className="flex items-center gap-1">
                     {LEGENDS[selectedMetric].map((l) => (
                         <div key={l.label} className="flex items-center gap-0.5">
-                            <span
-                                className="w-3 h-3 rounded-sm inline-block"
-                                style={{ backgroundColor: l.color }}
-                            />
+                            <span className="w-3 h-3 rounded-sm inline-block" style={{ backgroundColor: l.color }} />
                             <span className="text-xs text-gray-500">{l.label}</span>
                         </div>
                     ))}

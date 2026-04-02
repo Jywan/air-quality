@@ -2,18 +2,20 @@ import { useEffect, useCallback } from "react";
 import { useWeatherStore } from "@/store/useWeatherStore";
 
 export function useWeather() {
-    const { setData, setLoading } = useWeatherStore();
+    const { setData, setLoading, selectedRegion, selectedCity } = useWeatherStore();
 
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetch("/api/weather");
+            const params = new URLSearchParams({ sido: selectedRegion });
+            if (selectedCity) params.append("city", selectedCity);
+            const res = await fetch(`/api/weather?${params}`);
             const json = await res.json();
             if (json.data) setData(json.data);
         } finally {
             setLoading(false);
         }
-    }, [setData, setLoading]);
+    }, [selectedRegion, selectedCity, setData, setLoading]);
 
     useEffect(() => {
         fetchData();

@@ -30,11 +30,11 @@ export default function WeatherRanking() {
             <div className="space-y-1">
                 {sorted.map((d, i) => (
                     <div
-                        key={d.regionName}
+                        key={d.districtName}
                         className="flex items-center justify-between text-sm py-1 border-b border-gray-100"
                     >
                         <span className="text-gray-400 w-5">{i + 1}</span>
-                        <span className="flex-1 font-medium text-gray-800">{d.regionName}</span>
+                        <span className="flex-1 font-medium text-gray-800">{d.districtName}</span>
                         <span className="font-semibold text-gray-800">
                             {d[selectedMetric]}{UNIT[selectedMetric]}
                         </span>

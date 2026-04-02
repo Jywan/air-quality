@@ -1,4 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
+import { promises as fs } from "fs";
+import path from "path";
+import { latLonToGrid, getCentroid } from "@/lib/geoGrid";
 
 const BASE_URL = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0";
 
@@ -22,12 +25,30 @@ const REGION_GRID: Record<string, { nx: number; ny: number }> = {
     제주: { nx: 53, ny: 38  },
 };
 
+const REGION_GEOJSON: Record<string, string> = {
+    서울: 'seoul-districts.geojson',
+    인천: 'incheon-districts.geojson',
+    경기: 'gyeonggi-cities.geojson',
+    부산: 'busan-districts.geojson',
+    대구: 'daegu-districts.geojson',
+    광주: 'gwangju-districts.geojson',
+    대전: 'daejeon-districts.geojson',
+    울산: 'ulsan-districts.geojson',
+    세종: 'sejong-districts.geojson',
+    강원: 'gangwon-districts.geojson',
+    충북: 'chungbuk-districts.geojson',
+    충남: 'chungnam-districts.geojson',
+    전북: 'jeonbuk-districts.geojson',
+    전남: 'jeonnam-districts.geojson',
+    경북: 'gyeongbuk-districts.geojson',
+    경남: 'gyeongnam-districts.geojson',
+    제주: 'jeju-districts.geojson',
+};
+
 function getBaseDateTime(): { date: string; time: string } {
     const now = new Date();
     const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-    if (kst.getUTCMinutes() < 10) {
-        kst.setUTCHours(kst.getUTCHours() - 1);
-    }
+    if (kst.getUTCMinutes() < 10) kst.setUTCHours(kst.getUTCHours() - 1);
     const pad = (n: number) => String(n).padStart(2, "0");
     return {
         date: `${kst.getUTCFullYear()}${pad(kst.getUTCMonth() + 1)}${pad(kst.getUTCDate())}`,
@@ -35,18 +56,17 @@ function getBaseDateTime(): { date: string; time: string } {
     };
 }
 
-async function fetchRegion(region: string) {
-    const grid = REGION_GRID[region];
+async function fetchDistrict(districtName: string, nx: number, ny: number) {
     const { date, time } = getBaseDateTime();
     const params = new URLSearchParams({
         serviceKey: process.env.WEATHER_API_KEY!,
         pageNo: "1",
-        numOfRow: "10",
+        numOfRows: "10",
         dataType: "JSON",
         base_date: date,
         base_time: time,
-        nx: String(grid.nx),
-        ny: String(grid.ny),
+        nx: String(nx),
+        ny: String(ny),
     });
 
     const res = await fetch(`${BASE_URL}/getUltraSrtNcst?${params}`, {
@@ -62,7 +82,7 @@ async function fetchRegion(region: string) {
     };
 
     return {
-        regionName: region,
+        districtName,
         temp: get("T1H"),
         humidity: get("REH"),
         windSpeed: get("WSD"),
@@ -70,13 +90,63 @@ async function fetchRegion(region: string) {
     };
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+    const sido = req.nextUrl.searchParams.get("sido") ?? "전국";
+    const city = req.nextUrl.searchParams.get("city");
+
     try {
-        console.log("[weather] API key exists:", !!process.env.WEATHER_API_KEY);
-        const { date, time } = getBaseDateTime();
-        console.log("[weather] base_date:", date, "base_time:", time);
-        const regions = Object.keys(REGION_GRID);
-        const data = await Promise.all(regions.map(fetchRegion));
+        if (sido === "전국") {
+            const data = await Promise.all(
+                Object.entries(REGION_GRID).map(([name, grid]) =>
+                    fetchDistrict(name, grid.nx, grid.ny)
+                )
+            );
+            return NextResponse.json({ data });
+        }
+        
+        // 경기 드릴다운: 특정 시의 구/군 단위 조회
+        if (sido === "경기" && city) {
+
+            const geoPath = path.join(process.cwd(), "public", "gyeonggi-districts.geojson");
+            const geoJson = JSON.parse(await fs.readFile(geoPath, "utf-8"));
+
+            const districts = (geoJson.features as any[])
+                .filter((f) => (f.properties?.name ?? "").startsWith(city))
+                .map((f) => {
+                    const name: string = f.properties?.name ?? "";
+                    const centroid = getCentroid(f.geometry);
+                    if (!centroid) return null;
+                    const grid = latLonToGrid(centroid.lat, centroid.lon);
+                    return { name, ...grid };
+                })
+                .filter(Boolean) as { name: string; nx: number; ny: number }[];
+            
+            const data = await Promise.all(
+                districts.map((d) => fetchDistrict(d.name, d.nx, d.ny))
+            );
+            return NextResponse.json({ data });
+        }
+
+        const geoFile = REGION_GEOJSON[sido];
+        if (!geoFile) return NextResponse.json({ error: "Unknown region" }, { status: 400 });
+
+        const geoPath = path.join(process.cwd(), "public", geoFile);
+        const geoJson = JSON.parse(await fs.readFile(geoPath, "utf-8"));
+
+        const districts = (geoJson.features as any[])
+            .map((f) => {
+                const name: string = f.properties?.name ?? "";
+                const centroid = getCentroid(f.geometry);
+                if (!centroid) return null;
+                const grid = latLonToGrid(centroid.lat, centroid.lon);
+                return { name, ...grid };
+            })
+            .filter(Boolean) as { name: string; nx: number; ny: number }[];
+
+        const data = await Promise.all(
+            districts.map((d) => fetchDistrict(d.name, d.nx, d.ny))
+        );
+
         return NextResponse.json({ data });
     } catch (e) {
         console.error("[weather API error]", e);
