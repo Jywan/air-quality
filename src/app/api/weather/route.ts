@@ -25,6 +25,18 @@ const REGION_GRID: Record<string, { nx: number; ny: number }> = {
     제주: { nx: 53, ny: 38  },
 };
 
+const REGION_LATLON: Record<string, { lat: number; lon: number }> = {
+    서울: { lat: 37.5665, lon: 126.9780 }, 인천: { lat: 37.4563, lon: 126.7052 },
+    경기: { lat: 37.4138, lon: 127.5183 }, 강원: { lat: 37.5550, lon: 128.2098 },
+    충북: { lat: 36.6357, lon: 127.4914 }, 충남: { lat: 36.6588, lon: 126.6728 },
+    전북: { lat: 35.7175, lon: 127.1530 }, 전남: { lat: 34.8160, lon: 126.4630 },
+    경북: { lat: 36.4919, lon: 128.8889 }, 경남: { lat: 35.4606, lon: 128.2132 },
+    부산: { lat: 35.1796, lon: 129.0756 }, 대구: { lat: 35.8714, lon: 128.6014 },
+    광주: { lat: 35.1595, lon: 126.8526 }, 대전: { lat: 36.3504, lon: 127.3845 },
+    울산: { lat: 35.5384, lon: 129.3114 }, 세종: { lat: 36.4801, lon: 127.2890 },
+    제주: { lat: 33.4996, lon: 126.5312 },
+};
+
 const REGION_GEOJSON: Record<string, string> = {
     서울: 'seoul-districts.geojson',
     인천: 'incheon-districts.geojson',
@@ -56,7 +68,7 @@ function getBaseDateTime(): { date: string; time: string } {
     };
 }
 
-async function fetchDistrict(districtName: string, nx: number, ny: number) {
+async function fetchDistrict(districtName: string, nx: number, ny: number, lat?: number, lon?: number) {
     const { date, time } = getBaseDateTime();
     const params = new URLSearchParams({
         serviceKey: process.env.WEATHER_API_KEY!,
@@ -83,9 +95,12 @@ async function fetchDistrict(districtName: string, nx: number, ny: number) {
 
     return {
         districtName,
+        lat: lat ?? null,
+        lon: lon ?? null,
         temp: get("T1H"),
         humidity: get("REH"),
         windSpeed: get("WSD"),
+        windDir: get("VEC"),
         precipitation: get("RN1"),
     };
 }
@@ -97,9 +112,10 @@ export async function GET(req: NextRequest) {
     try {
         if (sido === "전국") {
             const data = await Promise.all(
-                Object.entries(REGION_GRID).map(([name, grid]) =>
-                    fetchDistrict(name, grid.nx, grid.ny)
-                )
+                Object.entries(REGION_GRID).map(([name, grid]) => {
+                    const ll = REGION_LATLON[name];
+                    return fetchDistrict(name, grid.nx, grid.ny, ll?.lat, ll?.lon);
+                })
             );
             return NextResponse.json({ data });
         }
@@ -109,7 +125,6 @@ export async function GET(req: NextRequest) {
 
             const geoPath = path.join(process.cwd(), "public", "gyeonggi-districts.geojson");
             const geoJson = JSON.parse(await fs.readFile(geoPath, "utf-8"));
-
             const districts = (geoJson.features as any[])
                 .filter((f) => (f.properties?.name ?? "").startsWith(city))
                 .map((f) => {
@@ -117,12 +132,12 @@ export async function GET(req: NextRequest) {
                     const centroid = getCentroid(f.geometry);
                     if (!centroid) return null;
                     const grid = latLonToGrid(centroid.lat, centroid.lon);
-                    return { name, ...grid };
+                    return { name, ...grid, lat: centroid.lat, lon: centroid.lon };
                 })
-                .filter(Boolean) as { name: string; nx: number; ny: number }[];
+                .filter(Boolean) as { name: string; nx: number; ny: number, lat: number; lon: number }[];
             
             const data = await Promise.all(
-                districts.map((d) => fetchDistrict(d.name, d.nx, d.ny))
+                districts.map((d) => fetchDistrict(d.name, d.nx, d.ny, d.lat, d.lon))
             );
             return NextResponse.json({ data });
         }
@@ -139,12 +154,12 @@ export async function GET(req: NextRequest) {
                 const centroid = getCentroid(f.geometry);
                 if (!centroid) return null;
                 const grid = latLonToGrid(centroid.lat, centroid.lon);
-                return { name, ...grid };
+                return { name, ...grid, lat: centroid.lat, lon: centroid.lon };
             })
-            .filter(Boolean) as { name: string; nx: number; ny: number }[];
+            .filter(Boolean) as { name: string; nx: number; ny: number, lat:number, lon: number }[];
 
         const data = await Promise.all(
-            districts.map((d) => fetchDistrict(d.name, d.nx, d.ny))
+            districts.map((d) => fetchDistrict(d.name, d.nx, d.ny, d.lat, d.lon))
         );
 
         return NextResponse.json({ data });

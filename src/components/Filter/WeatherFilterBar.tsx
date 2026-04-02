@@ -1,11 +1,13 @@
 "use client";
+
 import { useWeatherStore, type WeatherMetric, type Region } from "@/store/useWeatherStore";
-import { Thermometer, Droplets, Wind, CloudRain } from "lucide-react";
+import { Thermometer, Droplets, Wind, CloudRain, Navigation } from "lucide-react";
 
 const METRICS: { value: WeatherMetric; label: string; desc: string; icon: (active: boolean) => React.ReactNode }[] = [
     { value: "temp",          label: "기온",   desc: "°C",   icon: (a) => <Thermometer size={14} color={a ? "white" : "#ef4444"} /> },
     { value: "humidity",      label: "습도",   desc: "%",    icon: (a) => <Droplets    size={14} color={a ? "white" : "#60a5fa"} /> },
     { value: "windSpeed",     label: "풍속",   desc: "m/s",  icon: (a) => <Wind        size={14} color={a ? "white" : "#4ade80"} /> },
+    { value: "windDir",       label: "풍향",   desc: "방향", icon: (a) => <Navigation  size={14} color={a ? "white" : "#06b6d4"} /> },
     { value: "precipitation", label: "강수량", desc: "mm/h", icon: (a) => <CloudRain   size={14} color={a ? "white" : "#3b82f6"} /> },
 ];
 
@@ -49,6 +51,11 @@ const LEGENDS: Record<WeatherMetric, { color: string; label: string }[]> = {
         { color: "#facc15", label: "보통 ~9m/s" },
         { color: "#fb923c", label: "강 ~14m/s"  },
         { color: "#ef4444", label: "매우 강"     },
+    ],
+    windDir: [
+        { color: "#67e8f9", label: "약한 바람" },
+        { color: "#06b6d4", label: "보통 바람" },
+        { color: "#0891b2", label: "강한 바람" },
     ],
     precipitation: [
         { color: "#e2e8f0", label: "없음"   },

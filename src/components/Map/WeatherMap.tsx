@@ -5,12 +5,14 @@ import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
 import type { Feature, FeatureCollection } from "geojson";
 import type { Layer, PathOptions } from "leaflet";
 import { useWeatherStore, type WeatherMetric } from "@/store/useWeatherStore";
-import { features } from "process";
+import WindLayer from "./WindLayer";
+
 
 const METRIC_LABEL: Record<WeatherMetric, string> = {
     temp:          "기온 (°C)",
     humidity:      "습도 (%)",
     windSpeed:     "풍속 (m/s)",
+    windDir:       "풍향",
     precipitation: "강수량 (mm/h)",
 };
 
@@ -57,6 +59,8 @@ function getColor(value: number | null, metric: WeatherMetric): string {
             if (value <= 9)  return "#facc15";
             if (value <= 14) return "#fb923c";
             return "#ef4444";
+        case "windDir":
+            return "#94a3b8";
         case "precipitation":
             if (value === 0) return "#e2e8f0";
             if (value <= 1)  return "#bae6fd";
@@ -71,6 +75,10 @@ function formatValue(value: number | null, metric: WeatherMetric): string {
         case "temp":          return `${value}°C`;
         case "humidity":      return `${value}%`;
         case "windSpeed":     return `${value} m/s`;
+        case "windDir": {
+            const dirs = ["북","북북동","북동","동북동","동","동남동","남동","남남동","남","남남서","남서","서남서","서","서북서","북서","북북서"];
+            return dirs[Math.round(value / 22.5) % 16];
+        }
         case "precipitation": return `${value} mm/h`;
     }
 }
@@ -138,15 +146,15 @@ export default function WeatherMap() {
     }, [districtsGeoJson, selectedCity]);
 
     const getDistrictValue = useCallback(
-        (name: string): number | null => 
-            data.find((d) => d.districtName === name)?.[selectedMetric] ?? null,
+        (name: string): number | null =>
+            data.find((d) => d !== null && d.districtName === name)?.[selectedMetric] ?? null,
         [data, selectedMetric]
     )
 
     const getCityValue = useCallback(
         (cityName: string): number | null => {
             const entries = data.filter(
-                (d) => d.districtName === cityName || d.districtName.startsWith(cityName)
+                (d) => d !== null && (d.districtName === cityName || d.districtName.startsWith(cityName))
             );
             if (!entries.length) return null;
             const values = entries.map((d) => d[selectedMetric]).filter((v): v is number => v !== null);
@@ -155,6 +163,8 @@ export default function WeatherMap() {
         },
         [data, selectedMetric]
     );
+
+    const fillOpacity = selectedMetric === "windDir" ? 0 : 0.4;
 
     const styleDistrict = useCallback(
         (feature?: Feature): PathOptions => {
@@ -165,10 +175,10 @@ export default function WeatherMap() {
                 fillColor: data.length === 0 ? "#cbd5e1" : getColor(value, selectedMetric),
                 weight: isSelected ? 3 : 1,
                 color: isSelected ? "#1d4ed8" : "#64748b",
-                fillOpacity: 0.75,
+                fillOpacity,
             };
         },
-        [data, selectedMetric, selectedDistrict, getDistrictValue]
+        [data, selectedMetric, selectedDistrict, fillOpacity, getDistrictValue]
     );
 
     const styleCity = useCallback(
@@ -179,10 +189,10 @@ export default function WeatherMap() {
                 fillColor: data.length === 0 ? "#cbd5e1" : getColor(value, selectedMetric),
                 weight: 1,
                 color: "#64748b",
-                fillOpacity: 0.75,
+                fillOpacity,
             };
         },
-        [data, selectedMetric, getCityValue]
+        [data, selectedMetric, fillOpacity, getCityValue]
     );
 
     const onEachDistrict = useCallback(
@@ -196,16 +206,16 @@ export default function WeatherMap() {
             );
             layer.on({
                 click: () => setSelectedDistrict(selectedDistrict === name ? null : name),
-                mouseover: (e: any) => { e.target.setStyle({ fillOpacity: 0.92, weight: 2 }); },
+                mouseover: (e: any) => { e.target.setStyle({ fillOpacity: Math.min(fillOpacity + 0.2, 0.92), weight: 2 }); },
                 mouseout: (e: any) => {
                     e.target.setStyle({
-                        fillOpacity: 0.75,
+                        fillOpacity,
                         weight: name === selectedDistrict ? 3 : 1,
                     });
                 },
             });
         },
-        [data, selectedMetric, selectedDistrict, setSelectedDistrict, getDistrictValue]
+        [data, selectedMetric, selectedDistrict, fillOpacity, setSelectedDistrict, getDistrictValue]
     );
 
     const onEachCity = useCallback(
@@ -220,11 +230,11 @@ export default function WeatherMap() {
             );
             layer.on({
                 click: () => { if (hasDrilldown) setSelectedCity(name); },
-                mouseover: (e: any) => { e.target.setStyle({ fillOpacity: 0.92, weight: 2 }); },
-                mouseout: (e: any) => { e.target.setStyle({ fillOpacity: 0.75, weight: 1 }); },
+                mouseover: (e: any) => { e.target.setStyle({ fillOpacity: Math.min(fillOpacity + 0.2, 0.92), weight: 2 }); },
+                mouseout: (e: any) => { e.target.setStyle({ fillOpacity, weight: 1 }); },
             });
         },
-        [data, selectedMetric, getCityValue, setSelectedCity]
+        [data, selectedMetric, fillOpacity, getCityValue, setSelectedCity]
     );
 
     const currentGeoJson = isFlatRegion ? flatGeoJson
@@ -293,6 +303,7 @@ export default function WeatherMap() {
                         onEachFeature={onEachDistrict}
                     />
                 )}
+                <WindLayer />
             </MapContainer>
         </div>
     );

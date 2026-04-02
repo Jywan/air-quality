@@ -1,14 +1,17 @@
 import { create } from "zustand";
 import type { Region } from "@/store/useAirQualityStore";
 
-export type WeatherMetric = "temp" | "humidity" | "windSpeed" | "precipitation";
+export type WeatherMetric = "temp" | "humidity" | "windSpeed" | "windDir" | "precipitation";
 export type { Region };
 
 export interface WeatherData {
     districtName: string;
+    lat: number | null;
+    lon: number | null;
     temp: number | null;
     humidity: number | null;
     windSpeed: number | null;
+    windDir: number | null;
     precipitation: number | null;
 }
 
