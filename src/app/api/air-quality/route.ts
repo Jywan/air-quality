@@ -144,8 +144,8 @@ const STATION_MAP: Record<string, Record<string, string>> = {
     },
     울산: {
         '중구': '중구', '성남동': '중구', '약사동': '중구',
-        '남구': '남구', '신정동': '남구', '무거동': '남구', '대송동': '남구', '삼산동': '남구', '신정로': '남구',
-        '동구': '동구', '효문동': '동구', '여천동(울산)': '동구', '선암동': '동구',
+        '남구': '남구', '신정동': '남구', '무거동': '남구', '대송동': '남구', '삼산동': '남구', '신정로': '남구', '산업로': '남구', '울산항': '남구',
+        '동구': '동구', '효문동': '동구', '여천동(울산)': '동구', '선암동': '동구', '전하동': '동구', '방어진순환도로': '동구',
         '북구': '북구', '농소동': '북구', '송정동': '북구', '북부순환도로': '북구',
         '울주군': '울주군', '덕신리': '울주군', '부곡동(울산)': '울주군', '화산리': '울주군', '상남리': '울주군', '삼남읍': '울주군', '웅촌면': '울주군', '범서읍': '울주군',
     },
@@ -193,8 +193,8 @@ const STATION_MAP: Record<string, Record<string, string>> = {
         '천안시동남구': '천안시동남구', '성황동': '천안시동남구', '신방동': '천안시동남구', '수신면': '천안시동남구',
         '천안시서북구': '천안시서북구', '백석동': '천안시서북구', '성성동': '천안시서북구', '성거읍': '천안시서북구',
         '공주시': '공주시', '공주': '공주시', '사곡면': '공주시', '탄천면': '공주시', '동문동': '공주시',
-        '보령시': '보령시', '보령항': '보령시', '외연도': '보령시',
-        '아산시': '아산시', '모종동': '아산시', '배방읍': '아산시', '도고면': '아산시', '둔포면': '아산시', '인주면': '아산시', '장재리': '아산시',
+        '보령시': '보령시', '보령항': '보령시', '외연도': '보령시', '대천2동': '보령시',
+        '아산시': '아산시', '모종동': '아산시', '배방읍': '아산시', '도고면': '아산시', '둔포면': '아산시', '인주면': '아산시', '장재리': '아산시', '고덕면(충남)': '아산시',
         '서산시': '서산시', '대산항': '서산시', '성연면': '서산시', '대산리': '서산시',
         '논산시': '논산시', '논산': '논산시', '연무읍': '논산시', '성동면': '논산시',
         '계룡시': '계룡시', '엄사면': '계룡시',
@@ -203,12 +203,12 @@ const STATION_MAP: Record<string, Record<string, string>> = {
         '부여군': '부여군', '부여읍': '부여군',
         '서천군': '서천군', '서천읍': '서천군', '서면': '서천군', '장항읍': '서천군', '장항항': '서천군',
         '청양군': '청양군', '청양읍': '청양군', '정산면': '청양군',
-        '홍성군': '홍성군', '홍성읍': '홍성군', '내포': '홍성군',
+        '홍성군': '홍성군', '홍성읍': '홍성군', '내포': '홍성군', '주교면': '홍성군',
         '예산군': '예산군', '삽교읍': '예산군',
         '태안군': '태안군', '태안항': '태안군', '태안읍': '태안군', '파도리': '태안군', '이원면': '태안군', '격렬비열도': '태안군', '원북면': '태안군', '독곶리': '태안군', '복운리': '태안군',
     },
     전북: {
-        '전주시완산구': '전주시완산구', '삼천동': '전주시완산구', '서신동': '전주시완산구', '여의동': '전주시완산구', '효자동': '전주시완산구',
+        '전주시완산구': '전주시완산구', '삼천동': '전주시완산구', '서신동': '전주시완산구', '여의동': '전주시완산구', '효자동': '전주시완산구', '노송동': '전주시완산구',
         '전주시덕진구': '전주시덕진구', '팔복동': '전주시덕진구', '송천동': '전주시덕진구', '혁신동': '전주시덕진구',
         '군산시': '군산시', '신풍동(군산)': '군산시', '소룡동': '군산시', '사정동': '군산시', '비응도동': '군산시', '말도': '군산시', '소룡동2': '군산시',
         '익산시': '익산시', '옥산면': '익산시', '삼기면': '익산시', '팔봉동': '익산시', '모현동': '익산시', '용동면': '익산시', '함열읍': '익산시', '춘포면': '익산시', '여산면': '익산시', '금마면': '익산시',
@@ -345,15 +345,19 @@ async function fetchSidoItems(sido: string, pageCount: number): Promise<Record<s
 
 async function fetchNationwide() {
     const results = await Promise.all(
-        ALL_SIDOS.map((s) => fetchSidoItems(s, Math.min(PAGE_COUNT[s] ?? 2, 2)))
+        ALL_SIDOS.map((s) => fetchSidoItems(s, PAGE_COUNT[s] ?? 2))
     );
     const now = new Date();
+    const allUnmapped = new Set<string>();
     const data = ALL_SIDOS.map((sidoName, i) => {
         const items = results[i];
         const stationToDistrict = STATION_MAP[sidoName] ?? {};
         const pm25: number[] = [], pm10: number[] = [], o3: number[] = [], no2: number[] = [], co: number[] = [], so2: number[] = [];
         for (const item of items) {
-            if (!stationToDistrict[item.stationName]) continue;
+            if (!stationToDistrict[item.stationName]) {
+                allUnmapped.add(`[${sidoName}] ${item.stationName}`);
+                continue;
+            }
             const v_pm25 = Number(item.pm25Value); if (!isNaN(v_pm25)) pm25.push(v_pm25);
             const v_pm10 = Number(item.pm10Value); if (!isNaN(v_pm10)) pm10.push(v_pm10);
             const v_o3   = Number(item.o3Value);   if (!isNaN(v_o3))   o3.push(v_o3);
@@ -375,7 +379,7 @@ async function fetchNationwide() {
             noData: pm25.length === 0 && pm10.length === 0,
         };
     });
-    return NextResponse.json({ data, isMock: false, unmapped: [] });
+    return NextResponse.json({ data, isMock: false, unmapped: [...allUnmapped] });
 }
 
 export async function GET(request: NextRequest) {
@@ -452,7 +456,8 @@ export async function GET(request: NextRequest) {
         }));
 
         return NextResponse.json({ data: result, isMock: false, unmapped: [...unmapped] });
-    } catch {
+    } catch (e) {
+        console.error('[air-quality] API 호출 실패:', e);
         return NextResponse.json({ data: generateMockData(), isMock: true });
     }
 }

@@ -120,7 +120,7 @@ export default function WeatherMap() {
     const [districtsGeoJson,    setDistrictsGeoJson]    = useState<FeatureCollection | null>(null);
 
     const isFlatRegion = selectedRegion in FLAT_GEOJSON_FILES;
-    const isGyeonggiDrilldown = selectedRegion === "경기" && selectedCity !== null;
+    const isGyeonggiDrilldown = selectedRegion === "경기" && selectedCity !== null && GYEONGGI_CITIES_WITH_GU.has(selectedCity);
 
     useEffect(() => {
         const file = FLAT_GEOJSON_FILES[selectedRegion];
@@ -185,14 +185,15 @@ export default function WeatherMap() {
         (feature? :Feature): PathOptions => {
             const name = feature?.properties?.name ?? "";
             const value = getCityValue(name);
+            const isSelected = name === selectedDistrict;
             return {
                 fillColor: data.length === 0 ? "#cbd5e1" : getColor(value, selectedMetric),
-                weight: 1,
-                color: "#64748b",
+                weight: isSelected ? 3 : 1,
+                color: isSelected ? "#1d4ed8" : "#64748b",
                 fillOpacity,
             };
         },
-        [data, selectedMetric, fillOpacity, getCityValue]
+        [data, selectedMetric, fillOpacity, getCityValue, selectedDistrict]
     );
 
     const onEachDistrict = useCallback(
@@ -230,12 +231,18 @@ export default function WeatherMap() {
                 { sticky: true }
             );
             layer.on({
-                click: () => { if (hasDrilldown) setSelectedCity(name); },
+                click: () => {
+                    if (hasDrilldown) {
+                        setSelectedCity(name);
+                    } else {
+                        setSelectedDistrict(selectedDistrict === name ? null : name);
+                    }
+                },
                 mouseover: (e: any) => { e.target.setStyle({ fillOpacity: Math.min(fillOpacity + 0.2, 0.92), weight: 2 }); },
-                mouseout: (e: any) => { e.target.setStyle({ fillOpacity, weight: 1 }); },
+                mouseout: (e: any) => { e.target.setStyle({ fillOpacity, weight: name === selectedDistrict ? 3 : 1 }); },
             });
         },
-        [data, selectedMetric, fillOpacity, getCityValue, setSelectedCity]
+        [data, selectedMetric, fillOpacity, getCityValue, setSelectedCity, selectedDistrict, setSelectedDistrict]
     );
 
     const currentGeoJson = isFlatRegion ? flatGeoJson
@@ -290,7 +297,7 @@ export default function WeatherMap() {
                 )}
                 {currentGeoJson && selectedRegion === '경기' && !isGyeonggiDrilldown && (
                     <GeoJSON
-                        key={`weather-gyeonggi-cities-${selectedMetric}-${data.length}`}
+                        key={`weather-gyeonggi-cities-${selectedMetric}-${data.length}-${selectedDistrict}`}
                         data={currentGeoJson}
                         style={styleCity}
                         onEachFeature={onEachCity}
