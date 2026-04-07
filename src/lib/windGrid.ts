@@ -1,12 +1,14 @@
 import type { WeatherData } from "@/store/useWeatherStore";
 
-const D_LON = 0.1;
-const D_LAT = 0.1;
-const PADDING = 0.5; // 데이터 범위 바깥 여백 (도 단위)
+const LON_MIN = 124.0, LON_MAX = 132.0;
+const LAT_MIN = 33.0,  LAT_MAX = 38.6;
+const D_LON = 0.1,     D_LAT = 0.1;
+const NX = Math.round((LON_MAX - LON_MIN) / D_LON) + 1; // 81
+const NY = Math.round((LAT_MAX - LAT_MIN) / D_LAT) + 1; // 57
 
 /**
  * 구/군 단위 풍향·풍속 → IDW 보간 → leaflet-velocity 격자 데이터
- * 그리드 범위는 데이터 포인트 bounding box + 여백으로 동적 계산
+ * 그리드는 항상 전국 범위로 고정 (파티클 안정성 보장)
  */
 export function buildWindGrid(data: WeatherData[]) {
     const points = data.filter(
@@ -19,22 +21,14 @@ export function buildWindGrid(data: WeatherData[]) {
 
     if (points.length < 2) return null;
 
-    const lonMin = Math.min(...points.map((p) => p.lon)) - PADDING;
-    const lonMax = Math.max(...points.map((p) => p.lon)) + PADDING;
-    const latMin = Math.min(...points.map((p) => p.lat)) - PADDING;
-    const latMax = Math.max(...points.map((p) => p.lat)) + PADDING;
-
-    const nx = Math.round((lonMax - lonMin) / D_LON) + 1;
-    const ny = Math.round((latMax - latMin) / D_LAT) + 1;
-
     const uGrid: number[] = [];
     const vGrid: number[] = [];
 
     // 북→남, 서→동 순서로 채움 (leaflet-velocity 포맷)
-    for (let iy = 0; iy < ny; iy++) {
-        const lat = latMax - iy * D_LAT;
-        for (let ix = 0; ix < nx; ix++) {
-            const lon = lonMin + ix * D_LON;
+    for (let iy = 0; iy < NY; iy++) {
+        const lat = LAT_MAX - iy * D_LAT;
+        for (let ix = 0; ix < NX; ix++) {
+            const lon = LON_MIN + ix * D_LON;
 
             let sumU = 0, sumV = 0, sumW = 0;
 
@@ -65,9 +59,9 @@ export function buildWindGrid(data: WeatherData[]) {
         parameterUnit: "m.s-1",
         parameterCategory: 2,
         dx: D_LON, dy: D_LAT,
-        lo1: lonMin, la1: latMax,
-        lo2: lonMax, la2: latMin,
-        nx, ny,
+        lo1: LON_MIN, la1: LAT_MAX,
+        lo2: LON_MAX, la2: LAT_MIN,
+        nx: NX, ny: NY,
     };
 
     return [

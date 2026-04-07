@@ -78,22 +78,29 @@ export default function WeatherFilterBar() {
                 실시간 날씨 지도
             </h1>
             <div className="flex gap-1 border border-gray-200 rounded-full p-0.5">
-                {REGIONS.map((r) => (
-                    <button
-                        key={r.value}
-                        onClick={() => { if (selectedRegion !== r.value) setSelectedRegion(r.value); }}
-                        className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                            selectedRegion === r.value
-                                ? "bg-gray-800 text-white"
-                                : "text-gray-500 hover:bg-gray-100"
-                        }`}
-                    >
-                        {r.label}
-                    </button>
-                ))}
+                {REGIONS.map((r) => {
+                    const blocked = selectedMetric === "windDir" && r.value !== "전국";
+                    return (
+                        <button
+                            key={r.value}
+                            onClick={() => { if (!blocked && selectedRegion !== r.value) setSelectedRegion(r.value); }}
+                            disabled={blocked}
+                            title={blocked ? "풍향은 전국에서만 표시됩니다" : undefined}
+                            className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                selectedRegion === r.value
+                                    ? "bg-gray-800 text-white"
+                                    : blocked
+                                        ? "text-gray-300 cursor-default pointer-events-none"
+                                        : "transition-colors text-gray-500 hover:bg-gray-100"
+                            }`}
+                        >
+                            {r.label}
+                        </button>
+                    );
+                })}
             </div>
             <div className="flex gap-1">
-                {METRICS.map((m) => (
+                {METRICS.filter((m) => m.value !== "windDir" || selectedRegion === "전국").map((m) => (
                     <button
                         key={m.value}
                         onClick={() => setSelectedMetric(m.value)}

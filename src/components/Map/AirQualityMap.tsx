@@ -86,7 +86,7 @@ export default function AirQualityMap() {
     const [districtsGeoJson, setDistrictsGeoJson] = useState<FeatureCollection | null>(null);
 
     const isFlatRegion = selectedRegion in FLAT_GEOJSON_FILES;
-    const isGyeonggiDrilldown = selectedRegion === '경기' && selectedCity !== null;
+    const isGyeonggiDrilldown = selectedRegion === '경기' && selectedCity !== null && GYEONGGI_CITIES_WITH_GU.has(selectedCity);
 
     // flat 지역 GeoJSON (서울/인천/부산 등)
     useEffect(() => {
@@ -141,7 +141,7 @@ export default function AirQualityMap() {
                 fillColor: data.length === 0 ? "#cbd5e1" : district?.noData ? "#9ca3af" : getColor(value, selectedMetric),
                 weight: isSelected ? 3 : 1,
                 color: isSelected ? "#1d4ed8" : "#64748b",
-                fillOpacity: 0.75
+                fillOpacity: 0.4
             };
         },
         [data, selectedMetric, selectedDistrict, getDistrictValue]
@@ -158,7 +158,7 @@ export default function AirQualityMap() {
                 fillColor: data.length === 0 ? "#cbd5e1" : !hasData ? "#9ca3af" : getColor(value, selectedMetric),
                 weight: 1,
                 color: "#64748b",
-                fillOpacity: 0.75,
+                fillOpacity: 0.4,
             };
         },
         [data, selectedMetric, getCityValue]
@@ -178,7 +178,7 @@ export default function AirQualityMap() {
                 mouseover: (e) => { (e.target as L.Path).setStyle({ fillOpacity: 0.92, weight: 2 }); },
                 mouseout: (e) => {
                     (e.target as L.Path).setStyle({
-                        fillOpacity: 0.75,
+                        fillOpacity: 0.4,
                         weight: name === selectedDistrict ? 3 : 1,
                     });
                 },
@@ -200,10 +200,12 @@ export default function AirQualityMap() {
             );
             layer.on({
                 click: () => {
-                    if (hasDrilldown) setSelectedCity(name);
+                    const next = selectedCity === name ? null : name;
+                    setSelectedCity(next);
+                    if (!hasDrilldown) setSelectedDistrict(next);
                 },
                 mouseover: (e) => { (e.target as L.Path).setStyle({ fillOpacity: 0.92, weight: 2 }); },
-                mouseout: (e) => { (e.target as L.Path).setStyle({ fillOpacity: 0.75, weight: 1 }); },
+                mouseout: (e) => { (e.target as L.Path).setStyle({ fillOpacity: 0.4, weight: 1 }); },
             });
         },
         [data, selectedMetric, getCityValue, setSelectedCity]

@@ -197,6 +197,7 @@ export default function WeatherMap() {
 
     const onEachDistrict = useCallback(
         (feature: Feature, layer: Layer) => {
+            if (selectedMetric === "windDir") return;
             const name: string = feature.properties?.name ?? "";
             const value = getDistrictValue(name);
             layer.bindTooltip(
